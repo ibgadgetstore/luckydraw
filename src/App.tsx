@@ -895,7 +895,7 @@ export default function App() {
           isDark ? 'border-white/10 text-white/40' : 'border-purple-100 text-slate-500 bg-white/50'
         }`}
       >
-        IBGADGETSTORE • Official Lucky Draw System • Multi-Category & Odds Weighted Engine
+        • Created By IBGADGETSTORE
       </footer>
 
       {/* Celebratory Winner Modal */}
