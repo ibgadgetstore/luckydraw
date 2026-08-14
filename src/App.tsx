@@ -96,7 +96,21 @@ export default function App() {
   });
 
   const clientIdRef = useRef<string>(Math.random().toString(36).substring(2, 12));
-  const isIncomingSyncRef = useRef<boolean>(false);
+  const [isSyncConnected, setIsSyncConnected] = useState<boolean>(false);
+  const [syncPulse, setSyncPulse] = useState<boolean>(false);
+
+  // Hash/JSON refs to avoid echo sync loops while ensuring instant cross-user propagation
+  const lastSyncedPusatRef = useRef<string>(JSON.stringify(pusatPrizes));
+  const lastSyncedCabangRef = useRef<string>(JSON.stringify(cabangPrizes));
+  const lastSyncedHistoryRef = useRef<string>(JSON.stringify(winnerHistory));
+  const lastSyncedHeaderRef = useRef<string>(JSON.stringify(headerConfig));
+  const lastSyncedThemeRef = useRef<string>(theme);
+  const lastSyncedRemoveOnWinRef = useRef<boolean>(removeOnWin);
+
+  const triggerSyncPulse = () => {
+    setSyncPulse(true);
+    setTimeout(() => setSyncPulse(false), 800);
+  };
 
   // Initial fetch from server state + Server-Sent Events (SSE) for real-time live synchronization between 2+ users
   useEffect(() => {
@@ -108,34 +122,41 @@ export default function App() {
       })
       .then((data) => {
         if (data && typeof data === 'object') {
-          isIncomingSyncRef.current = true;
-          if (Array.isArray(data.pusatPrizes) && data.pusatPrizes.length > 0) {
+          setIsSyncConnected(true);
+          if (Array.isArray(data.pusatPrizes)) {
+            const json = JSON.stringify(data.pusatPrizes);
+            lastSyncedPusatRef.current = json;
             setPusatPrizes(data.pusatPrizes);
-            localStorage.setItem('undian_prizes_pusat', JSON.stringify(data.pusatPrizes));
+            localStorage.setItem('undian_prizes_pusat', json);
           }
-          if (Array.isArray(data.cabangPrizes) && data.cabangPrizes.length > 0) {
+          if (Array.isArray(data.cabangPrizes)) {
+            const json = JSON.stringify(data.cabangPrizes);
+            lastSyncedCabangRef.current = json;
             setCabangPrizes(data.cabangPrizes);
-            localStorage.setItem('undian_prizes_cabang', JSON.stringify(data.cabangPrizes));
+            localStorage.setItem('undian_prizes_cabang', json);
           }
           if (Array.isArray(data.winnerHistory)) {
+            const json = JSON.stringify(data.winnerHistory);
+            lastSyncedHistoryRef.current = json;
             setWinnerHistory(data.winnerHistory);
-            localStorage.setItem('undian_winner_history', JSON.stringify(data.winnerHistory));
+            localStorage.setItem('undian_winner_history', json);
           }
-          if (data.headerConfig) {
+          if (data.headerConfig && typeof data.headerConfig === 'object') {
+            const json = JSON.stringify(data.headerConfig);
+            lastSyncedHeaderRef.current = json;
             setHeaderConfig(data.headerConfig);
-            localStorage.setItem('ibgadget_header_config', JSON.stringify(data.headerConfig));
+            localStorage.setItem('ibgadget_header_config', json);
           }
           if (data.theme) {
+            lastSyncedThemeRef.current = data.theme;
             setTheme(data.theme);
             localStorage.setItem('ibgadget_theme', data.theme);
           }
           if (typeof data.removeOnWin === 'boolean') {
+            lastSyncedRemoveOnWinRef.current = data.removeOnWin;
             setRemoveOnWin(data.removeOnWin);
             localStorage.setItem('ibgadget_remove_on_win', String(data.removeOnWin));
           }
-          setTimeout(() => {
-            isIncomingSyncRef.current = false;
-          }, 300);
         }
       })
       .catch((err) => {
@@ -150,6 +171,10 @@ export default function App() {
       try {
         eventSource = new EventSource('/api/sync/events');
 
+        eventSource.onopen = () => {
+          setIsSyncConnected(true);
+        };
+
         eventSource.onmessage = (event) => {
           try {
             const payload = JSON.parse(event.data);
@@ -158,35 +183,52 @@ export default function App() {
                 // Ignore self-originating updates
                 return;
               }
-              isIncomingSyncRef.current = true;
+              setIsSyncConnected(true);
+              triggerSyncPulse();
               const s = payload.state;
+
               if (Array.isArray(s.pusatPrizes)) {
-                setPusatPrizes(s.pusatPrizes);
-                localStorage.setItem('undian_prizes_pusat', JSON.stringify(s.pusatPrizes));
+                const json = JSON.stringify(s.pusatPrizes);
+                if (json !== lastSyncedPusatRef.current) {
+                  lastSyncedPusatRef.current = json;
+                  setPusatPrizes(s.pusatPrizes);
+                  localStorage.setItem('undian_prizes_pusat', json);
+                }
               }
               if (Array.isArray(s.cabangPrizes)) {
-                setCabangPrizes(s.cabangPrizes);
-                localStorage.setItem('undian_prizes_cabang', JSON.stringify(s.cabangPrizes));
+                const json = JSON.stringify(s.cabangPrizes);
+                if (json !== lastSyncedCabangRef.current) {
+                  lastSyncedCabangRef.current = json;
+                  setCabangPrizes(s.cabangPrizes);
+                  localStorage.setItem('undian_prizes_cabang', json);
+                }
               }
               if (Array.isArray(s.winnerHistory)) {
-                setWinnerHistory(s.winnerHistory);
-                localStorage.setItem('undian_winner_history', JSON.stringify(s.winnerHistory));
+                const json = JSON.stringify(s.winnerHistory);
+                if (json !== lastSyncedHistoryRef.current) {
+                  lastSyncedHistoryRef.current = json;
+                  setWinnerHistory(s.winnerHistory);
+                  localStorage.setItem('undian_winner_history', json);
+                }
               }
-              if (s.headerConfig) {
-                setHeaderConfig(s.headerConfig);
-                localStorage.setItem('ibgadget_header_config', JSON.stringify(s.headerConfig));
+              if (s.headerConfig && typeof s.headerConfig === 'object') {
+                const json = JSON.stringify(s.headerConfig);
+                if (json !== lastSyncedHeaderRef.current) {
+                  lastSyncedHeaderRef.current = json;
+                  setHeaderConfig(s.headerConfig);
+                  localStorage.setItem('ibgadget_header_config', json);
+                }
               }
-              if (s.theme) {
+              if (s.theme && s.theme !== lastSyncedThemeRef.current) {
+                lastSyncedThemeRef.current = s.theme;
                 setTheme(s.theme);
                 localStorage.setItem('ibgadget_theme', s.theme);
               }
-              if (typeof s.removeOnWin === 'boolean') {
+              if (typeof s.removeOnWin === 'boolean' && s.removeOnWin !== lastSyncedRemoveOnWinRef.current) {
+                lastSyncedRemoveOnWinRef.current = s.removeOnWin;
                 setRemoveOnWin(s.removeOnWin);
                 localStorage.setItem('ibgadget_remove_on_win', String(s.removeOnWin));
               }
-              setTimeout(() => {
-                isIncomingSyncRef.current = false;
-              }, 300);
             }
           } catch (e) {
             console.error('Failed to parse SSE payload:', e);
@@ -194,16 +236,17 @@ export default function App() {
         };
 
         eventSource.onerror = () => {
+          setIsSyncConnected(false);
           if (eventSource) {
             eventSource.close();
             eventSource = null;
           }
-          // Auto reconnect after 3 seconds
+          // Auto reconnect after 2.5 seconds
           if (!reconnectTimeout) {
             reconnectTimeout = setTimeout(() => {
               reconnectTimeout = null;
               setupSSE();
-            }, 3000);
+            }, 2500);
           }
         };
       } catch (err) {
@@ -220,23 +263,42 @@ export default function App() {
         channel = new BroadcastChannel('ibgadget_realtime_sync');
         channel.onmessage = (event) => {
           const { type, data } = event.data || {};
-          isIncomingSyncRef.current = true;
+          triggerSyncPulse();
           if (type === 'SYNC_PUSAT_PRIZES') {
-            setPusatPrizes(data);
+            const json = JSON.stringify(data);
+            if (json !== lastSyncedPusatRef.current) {
+              lastSyncedPusatRef.current = json;
+              setPusatPrizes(data);
+            }
           } else if (type === 'SYNC_CABANG_PRIZES') {
-            setCabangPrizes(data);
+            const json = JSON.stringify(data);
+            if (json !== lastSyncedCabangRef.current) {
+              lastSyncedCabangRef.current = json;
+              setCabangPrizes(data);
+            }
           } else if (type === 'SYNC_WINNER_HISTORY') {
-            setWinnerHistory(data);
+            const json = JSON.stringify(data);
+            if (json !== lastSyncedHistoryRef.current) {
+              lastSyncedHistoryRef.current = json;
+              setWinnerHistory(data);
+            }
           } else if (type === 'SYNC_HEADER_CONFIG') {
-            setHeaderConfig(data);
+            const json = JSON.stringify(data);
+            if (json !== lastSyncedHeaderRef.current) {
+              lastSyncedHeaderRef.current = json;
+              setHeaderConfig(data);
+            }
           } else if (type === 'SYNC_THEME') {
-            setTheme(data);
+            if (data !== lastSyncedThemeRef.current) {
+              lastSyncedThemeRef.current = data;
+              setTheme(data);
+            }
           } else if (type === 'SYNC_REMOVE_ON_WIN') {
-            setRemoveOnWin(data);
+            if (data !== lastSyncedRemoveOnWinRef.current) {
+              lastSyncedRemoveOnWinRef.current = data;
+              setRemoveOnWin(data);
+            }
           }
-          setTimeout(() => {
-            isIncomingSyncRef.current = false;
-          }, 300);
         };
       }
     } catch (e) {
@@ -246,23 +308,39 @@ export default function App() {
     const handleStorage = (e: StorageEvent) => {
       if (!e.key || !e.newValue) return;
       try {
-        isIncomingSyncRef.current = true;
+        triggerSyncPulse();
         if (e.key === 'undian_prizes_pusat') {
-          setPusatPrizes(JSON.parse(e.newValue));
+          if (e.newValue !== lastSyncedPusatRef.current) {
+            lastSyncedPusatRef.current = e.newValue;
+            setPusatPrizes(JSON.parse(e.newValue));
+          }
         } else if (e.key === 'undian_prizes_cabang') {
-          setCabangPrizes(JSON.parse(e.newValue));
+          if (e.newValue !== lastSyncedCabangRef.current) {
+            lastSyncedCabangRef.current = e.newValue;
+            setCabangPrizes(JSON.parse(e.newValue));
+          }
         } else if (e.key === 'undian_winner_history') {
-          setWinnerHistory(JSON.parse(e.newValue));
+          if (e.newValue !== lastSyncedHistoryRef.current) {
+            lastSyncedHistoryRef.current = e.newValue;
+            setWinnerHistory(JSON.parse(e.newValue));
+          }
         } else if (e.key === 'ibgadget_header_config') {
-          setHeaderConfig(JSON.parse(e.newValue));
+          if (e.newValue !== lastSyncedHeaderRef.current) {
+            lastSyncedHeaderRef.current = e.newValue;
+            setHeaderConfig(JSON.parse(e.newValue));
+          }
         } else if (e.key === 'ibgadget_theme') {
-          setTheme(e.newValue as ThemeMode);
+          if (e.newValue !== lastSyncedThemeRef.current) {
+            lastSyncedThemeRef.current = e.newValue;
+            setTheme(e.newValue as ThemeMode);
+          }
         } else if (e.key === 'ibgadget_remove_on_win') {
-          setRemoveOnWin(e.newValue === 'true');
+          const val = e.newValue === 'true';
+          if (val !== lastSyncedRemoveOnWinRef.current) {
+            lastSyncedRemoveOnWinRef.current = val;
+            setRemoveOnWin(val);
+          }
         }
-        setTimeout(() => {
-          isIncomingSyncRef.current = false;
-        }, 300);
       } catch (err) {
         console.error('Failed to parse storage sync:', err);
       }
@@ -289,7 +367,8 @@ export default function App() {
     }
 
     // Push update to server for instant cross-device broadcast
-    if (updatesObj && !isIncomingSyncRef.current) {
+    if (updatesObj) {
+      triggerSyncPulse();
       try {
         fetch('/api/sync/update', {
           method: 'POST',
@@ -307,37 +386,59 @@ export default function App() {
 
   // Save theme
   useEffect(() => {
-    localStorage.setItem('ibgadget_theme', theme);
-    broadcastChange('SYNC_THEME', theme, { theme });
+    if (theme !== lastSyncedThemeRef.current) {
+      lastSyncedThemeRef.current = theme;
+      localStorage.setItem('ibgadget_theme', theme);
+      broadcastChange('SYNC_THEME', theme, { theme });
+    }
   }, [theme]);
 
   // Save header config
   useEffect(() => {
-    localStorage.setItem('ibgadget_header_config', JSON.stringify(headerConfig));
-    broadcastChange('SYNC_HEADER_CONFIG', headerConfig, { headerConfig });
+    const json = JSON.stringify(headerConfig);
+    if (json !== lastSyncedHeaderRef.current) {
+      lastSyncedHeaderRef.current = json;
+      localStorage.setItem('ibgadget_header_config', json);
+      broadcastChange('SYNC_HEADER_CONFIG', headerConfig, { headerConfig });
+    }
   }, [headerConfig]);
 
   // Save remove on win
   useEffect(() => {
-    localStorage.setItem('ibgadget_remove_on_win', String(removeOnWin));
-    broadcastChange('SYNC_REMOVE_ON_WIN', removeOnWin, { removeOnWin });
+    if (removeOnWin !== lastSyncedRemoveOnWinRef.current) {
+      lastSyncedRemoveOnWinRef.current = removeOnWin;
+      localStorage.setItem('ibgadget_remove_on_win', String(removeOnWin));
+      broadcastChange('SYNC_REMOVE_ON_WIN', removeOnWin, { removeOnWin });
+    }
   }, [removeOnWin]);
 
   // Save prize pools
   useEffect(() => {
-    localStorage.setItem('undian_prizes_pusat', JSON.stringify(pusatPrizes));
-    broadcastChange('SYNC_PUSAT_PRIZES', pusatPrizes, { pusatPrizes });
+    const json = JSON.stringify(pusatPrizes);
+    if (json !== lastSyncedPusatRef.current) {
+      lastSyncedPusatRef.current = json;
+      localStorage.setItem('undian_prizes_pusat', json);
+      broadcastChange('SYNC_PUSAT_PRIZES', pusatPrizes, { pusatPrizes });
+    }
   }, [pusatPrizes]);
 
   useEffect(() => {
-    localStorage.setItem('undian_prizes_cabang', JSON.stringify(cabangPrizes));
-    broadcastChange('SYNC_CABANG_PRIZES', cabangPrizes, { cabangPrizes });
+    const json = JSON.stringify(cabangPrizes);
+    if (json !== lastSyncedCabangRef.current) {
+      lastSyncedCabangRef.current = json;
+      localStorage.setItem('undian_prizes_cabang', json);
+      broadcastChange('SYNC_CABANG_PRIZES', cabangPrizes, { cabangPrizes });
+    }
   }, [cabangPrizes]);
 
   // Save winner history
   useEffect(() => {
-    localStorage.setItem('undian_winner_history', JSON.stringify(winnerHistory));
-    broadcastChange('SYNC_WINNER_HISTORY', winnerHistory, { winnerHistory });
+    const json = JSON.stringify(winnerHistory);
+    if (json !== lastSyncedHistoryRef.current) {
+      lastSyncedHistoryRef.current = json;
+      localStorage.setItem('undian_winner_history', json);
+      broadcastChange('SYNC_WINNER_HISTORY', winnerHistory, { winnerHistory });
+    }
   }, [winnerHistory]);
 
   const toggleTheme = () => {
@@ -492,15 +593,44 @@ export default function App() {
 
           {/* Quick Utility Actions */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* Live Realtime Sync Status Pill */}
+            <div
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-mono transition-all ${
+                isSyncConnected
+                  ? isDark
+                    ? 'bg-emerald-950/40 border-emerald-500/30 text-emerald-300'
+                    : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                  : isDark
+                  ? 'bg-amber-950/40 border-amber-500/30 text-amber-300'
+                  : 'bg-amber-50 border-amber-200 text-amber-700'
+              } ${syncPulse ? 'ring-2 ring-[#8B5CF6] scale-105 transition-transform' : ''}`}
+              title={
+                isSyncConnected
+                  ? 'Sinkronisasi Realtime Aktif: Setiap edit hadiah, persentase, riwayat pemenang, & teks header langsung sinkron'
+                  : 'Menghubungkan ke Server Sinkronisasi Realtime...'
+              }
+            >
+              <span
+                className={`w-2 h-2 rounded-full shrink-0 ${
+                  isSyncConnected
+                    ? 'bg-emerald-500 shadow-[0_0_8px_#10B981] animate-pulse'
+                    : 'bg-amber-500 animate-ping'
+                }`}
+              />
+              <span className="font-semibold tracking-wider uppercase text-[10px] hidden sm:inline">
+                {isSyncConnected ? 'REALTIME SYNC' : 'CONNECTING...'}
+              </span>
+            </div>
+
             {/* System Status Pill */}
             <div
-              className={`hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-mono ${
+              className={`hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-mono ${
                 isDark
                   ? 'bg-[#1F1F2C] border-white/10 text-white/70'
                   : 'bg-purple-50/80 border-purple-100 text-slate-600'
               }`}
             >
-              <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10B981] animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
               <span className="text-[11px] uppercase tracking-wider font-semibold">
                 {headerConfig.systemStatusText}
               </span>

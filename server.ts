@@ -9,9 +9,9 @@ interface AppState {
   winnerHistory: any[];
   headerConfig: {
     title: string;
+    badge: string;
     subtitle: string;
-    badgeText: string;
-    logoSubtext: string;
+    systemStatusText: string;
   };
   theme: string;
   removeOnWin: boolean;
@@ -24,27 +24,32 @@ const STATE_FILE = path.join(process.cwd(), 'undian_state.json');
 // Default initial state
 const defaultState: AppState = {
   pusatPrizes: [
-    { id: 'p1', name: 'iPhone 15 Pro Max', category: 'pusat', weight: 5, percentage: 5, isGrandPrize: true, icon: 'smartphone', color: '#8B5CF6' },
-    { id: 'p2', name: 'MacBook Air M2', category: 'pusat', weight: 8, percentage: 8, isGrandPrize: true, icon: 'laptop', color: '#EC4899' },
-    { id: 'p3', name: 'iPad Air Gen 5', category: 'pusat', weight: 12, percentage: 12, icon: 'tablet', color: '#3B82F6' },
-    { id: 'p4', name: 'Apple Watch Series 9', category: 'pusat', weight: 15, percentage: 15, icon: 'watch', color: '#10B981' },
-    { id: 'p5', name: 'AirPods Pro 2', category: 'pusat', weight: 20, percentage: 20, icon: 'headphones', color: '#F59E0B' },
-    { id: 'p6', name: 'Voucher Belanja Rp 1 Juta', category: 'pusat', weight: 40, percentage: 40, icon: 'ticket', color: '#6366F1' },
+    { id: 'p-1', name: 'Free Android', category: 'pusat', iconType: 'phone', color: '#8B5CF6', percentage: 5 },
+    { id: 'p-2', name: 'Uang Tunai 300K', category: 'pusat', iconType: 'cash', color: '#06B6D4', percentage: 10 },
+    { id: 'p-3', name: 'Potongan Harga 200K', category: 'pusat', iconType: 'voucher', color: '#EC4899', percentage: 15 },
+    { id: 'p-4', name: 'Shopeepay 50K', category: 'pusat', iconType: 'wallet', color: '#6366F1', percentage: 15 },
+    { id: 'p-5', name: 'Uang Tunai 200K', category: 'pusat', iconType: 'cash', color: '#A78BFA', percentage: 10 },
+    { id: 'p-6', name: 'Potongan Harga 300K', category: 'pusat', iconType: 'voucher', color: '#10B981', percentage: 10 },
+    { id: 'p-7', name: 'Shopeepay 100K', category: 'pusat', iconType: 'wallet', color: '#D946EF', percentage: 10 },
+    { id: 'p-8', name: 'Shopeepay 75K', category: 'pusat', iconType: 'wallet', color: '#14B8A6', percentage: 10 },
+    { id: 'p-9', name: 'Uang Tunai 100K', category: 'pusat', iconType: 'cash', color: '#3B82F6', percentage: 15 },
   ],
   cabangPrizes: [
-    { id: 'c1', name: 'AirPods 3rd Gen', category: 'cabang', weight: 5, percentage: 5, isGrandPrize: true, icon: 'headphones', color: '#8B5CF6' },
-    { id: 'c2', name: 'Smart Powerbank 20.000mAh', category: 'cabang', weight: 10, percentage: 10, icon: 'battery-charging', color: '#EC4899' },
-    { id: 'c3', name: 'Fast Wireless Charger', category: 'cabang', weight: 15, percentage: 15, icon: 'zap', color: '#3B82F6' },
-    { id: 'c4', name: 'Voucher Potongan Rp 250rb', category: 'cabang', weight: 20, percentage: 20, icon: 'tag', color: '#10B981' },
-    { id: 'c5', name: 'Premium Case + Tempered Glass', category: 'cabang', weight: 25, percentage: 25, icon: 'shield', color: '#F59E0B' },
-    { id: 'c6', name: 'Exclusive Merchandise IB', category: 'cabang', weight: 25, percentage: 25, icon: 'gift', color: '#6366F1' },
+    { id: 'c-1', name: 'Uang Tunai 300K', category: 'cabang', iconType: 'cash', color: '#06B6D4', percentage: 10 },
+    { id: 'c-2', name: 'Potongan Harga 200K', category: 'cabang', iconType: 'voucher', color: '#EC4899', percentage: 15 },
+    { id: 'c-3', name: 'Shopeepay 50K', category: 'cabang', iconType: 'wallet', color: '#6366F1', percentage: 15 },
+    { id: 'c-4', name: 'Uang Tunai 200K', category: 'cabang', iconType: 'cash', color: '#A78BFA', percentage: 10 },
+    { id: 'c-5', name: 'Potongan Harga 300K', category: 'cabang', iconType: 'voucher', color: '#10B981', percentage: 15 },
+    { id: 'c-6', name: 'Shopeepay 100K', category: 'cabang', iconType: 'wallet', color: '#D946EF', percentage: 10 },
+    { id: 'c-7', name: 'Shopeepay 75K', category: 'cabang', iconType: 'wallet', color: '#14B8A6', percentage: 10 },
+    { id: 'c-8', name: 'Uang Tunai 100K', category: 'cabang', iconType: 'cash', color: '#3B82F6', percentage: 15 },
   ],
   winnerHistory: [],
   headerConfig: {
     title: 'IBGADGETSTORE',
-    subtitle: 'LUCKY DRAW EXCLUSIVE',
-    badgeText: 'EVENT RESMI & TERVERIFIKASI',
-    logoSubtext: 'PREMIUM GADGET STORE',
+    badge: 'OFFICIAL LUCKY DRAW',
+    subtitle: 'Sistem Undian Eksklusif • Hadiah Pusat & Hadiah Cabang',
+    systemStatusText: 'SYSTEM READY',
   },
   theme: 'dark',
   removeOnWin: false,
