@@ -114,7 +114,7 @@ export const SlotMachine: React.FC<SlotMachineProps> = ({
               className="flex flex-col items-center text-center z-10"
             >
               <span className="text-[10px] uppercase font-mono font-semibold text-[#8B5CF6] tracking-wider mb-2 px-2.5 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20">
-                HADIAH {displayedPrize.category.toUpperCase()}
+                HADIAH {displayedPrize.category.toUpperCase()} • {displayedPrize.percentage ?? 10}% PELUANG
               </span>
               <h3 className={`text-2xl sm:text-3xl font-serif font-bold tracking-tight ${
                 isDark ? 'text-white' : 'text-slate-900'

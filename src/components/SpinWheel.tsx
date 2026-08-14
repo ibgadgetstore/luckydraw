@@ -126,10 +126,13 @@ export const SpinWheel: React.FC<SpinWheelProps> = ({
       const fontSize = numSegments > 10 ? 11 : numSegments > 7 ? 12 : 13;
       ctx.font = `600 ${fontSize}px "Plus Jakarta Sans", sans-serif`;
 
-      // Text label (clean prize name without percentage indicators)
+      // Text with percentage indicator
       let text = prize.name;
-      if (text.length > 20) {
-        text = text.substring(0, 18) + '...';
+      if (text.length > 18) {
+        text = text.substring(0, 16) + '...';
+      }
+      if (prize.percentage !== undefined) {
+        text += ` (${prize.percentage}%)`;
       }
       ctx.fillText(text, radius - 16, 4);
 

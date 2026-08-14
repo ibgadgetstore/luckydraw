@@ -39,7 +39,7 @@ export const WinnerModal: React.FC<WinnerModalProps> = ({
   theme = 'light',
 }) => {
   const [copied, setCopied] = useState(false);
-  const [isGeneratingProof, setIsGeneratingProof] = useState(false);
+  const [isGeneratingCertificate, setIsGeneratingCertificate] = useState(false);
   const isDark = theme === 'dark';
 
   // Verification Code generated for the claim ticket
@@ -77,14 +77,14 @@ export const WinnerModal: React.FC<WinnerModalProps> = ({
 
   if (!winner || !prize) return null;
 
-  const claimText = `*BUKTI KEMENANGAN RESMI IBGADGETSTORE*\n\n` +
+  const claimText = `*SERTIFIKAT PEMENANG RESMI IBGADGETSTORE*\n\n` +
     `🏆 *Nama Pemenang*: ${winner.winnerName || 'Pelanggan Setia'}\n` +
     `🎁 *Hadiah*: ${winner.prizeName}\n` +
     `🏷️ *Kategori*: Hadiah ${winner.category.toUpperCase()}\n` +
     `🎮 *Mode Pengundian*: ${winner.gameMode.toUpperCase()}\n` +
     `🔢 *Kode Verifikasi*: ${verificationCode}\n` +
     `📅 *Waktu*: ${new Date(winner.timestamp).toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'medium' })}\n\n` +
-    `_Tunjukkan pesan atau bukti kemenangan ini ke staf/admin resmi IBGADGETSTORE untuk proses klaim hadiah._`;
+    `_Tunjukkan pesan atau sertifikat ini ke staf/admin resmi IBGADGETSTORE untuk proses klaim._`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(claimText);
@@ -109,9 +109,9 @@ export const WinnerModal: React.FC<WinnerModalProps> = ({
     return <Gift className="w-8 h-8 text-[#8B5CF6]" />;
   };
 
-  // Generate high-resolution digital proof PNG
-  const handleDownloadProof = () => {
-    setIsGeneratingProof(true);
+  // Generate high-resolution digital certificate PNG
+  const handleDownloadCertificate = () => {
+    setIsGeneratingCertificate(true);
     try {
       const canvas = document.createElement('canvas');
       canvas.width = 1200;
@@ -133,7 +133,7 @@ export const WinnerModal: React.FC<WinnerModalProps> = ({
       ctx.fillStyle = bgGrad;
       ctx.fillRect(0, 0, 1200, 760);
 
-      // Border & Guilloche Frame
+      // Certificate Border & Guilloche Frame
       ctx.lineWidth = 3;
       ctx.strokeStyle = '#8B5CF6';
       ctx.strokeRect(30, 30, 1140, 700);
@@ -160,16 +160,16 @@ export const WinnerModal: React.FC<WinnerModalProps> = ({
       ctx.textAlign = 'center';
       ctx.fillStyle = '#8B5CF6';
       ctx.font = 'bold 22px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText('IBGADGETSTORE • BUKTI KEMENANGAN RESMI', 600, 100);
+      ctx.fillText('IBGADGETSTORE • OFFICIAL CERTIFICATE', 600, 100);
 
       // Title
       ctx.fillStyle = isDark ? '#FFFFFF' : '#1E1B4B';
       ctx.font = 'bold 36px Georgia, serif';
-      ctx.fillText('BUKTI SAH KLAIM HADIAH LUCKY DRAW', 600, 155);
+      ctx.fillText('SERTIFIKAT PEMENANG LUCKY DRAW', 600, 155);
 
       ctx.fillStyle = isDark ? 'rgba(255,255,255,0.6)' : '#64748B';
       ctx.font = '16px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText('Dokumen digital ini diterbitkan sebagai tanda bukti kemenangan yang sah:', 600, 195);
+      ctx.fillText('Sertifikat ini diterbitkan secara sah dan resmi sebagai bukti klaim hadiah:', 600, 195);
 
       // Prize Card Box
       ctx.fillStyle = isDark ? '#1C1B29' : '#FFFFFF';
@@ -193,7 +193,7 @@ export const WinnerModal: React.FC<WinnerModalProps> = ({
       // Recipient Name
       ctx.fillStyle = isDark ? 'rgba(255,255,255,0.7)' : '#475569';
       ctx.font = 'bold 18px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText(`Pemenang: ${winner.winnerName || 'Peserta Terpilih'}`, 600, 390);
+      ctx.fillText(`Dianugerahkan kepada: ${winner.winnerName || 'Peserta Terpilih'}`, 600, 390);
 
       // Meta info columns
       ctx.textAlign = 'left';
@@ -208,7 +208,7 @@ export const WinnerModal: React.FC<WinnerModalProps> = ({
         month: 'long',
         year: 'numeric',
       });
-      ctx.fillText(`TANGGAL KLAIM  : ${formattedDate}`, 1040, 480);
+      ctx.fillText(`TANGGAL TERBIT : ${formattedDate}`, 1040, 480);
       ctx.fillText(`STATUS KLAIM   : TERVERIFIKASI SAH`, 1040, 510);
 
       // Footer divider
@@ -225,19 +225,19 @@ export const WinnerModal: React.FC<WinnerModalProps> = ({
       ctx.fillText('TIM MANAJEMEN IBGADGETSTORE', 600, 615);
       ctx.fillStyle = isDark ? 'rgba(255,255,255,0.4)' : '#94A3B8';
       ctx.font = '13px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText('Bukti kemenangan elektronik ini sah dan langsung dapat diklaim ke staf toko.', 600, 645);
+      ctx.fillText('Dokumen elektronik ini resmi dan valid tanpa memerlukan tanda tangan basah.', 600, 645);
 
       // Trigger download
       const link = document.createElement('a');
-      link.download = `Bukti-Kemenangan-IBGADGETSTORE-${verificationCode}.png`;
+      link.download = `Sertifikat-IBGADGETSTORE-${verificationCode}.png`;
       link.href = canvas.toDataURL('image/png');
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     } catch (err) {
-      console.error('Failed to generate proof image:', err);
+      console.error('Failed to generate certificate:', err);
     } finally {
-      setIsGeneratingProof(false);
+      setIsGeneratingCertificate(false);
     }
   };
 
@@ -251,10 +251,13 @@ export const WinnerModal: React.FC<WinnerModalProps> = ({
           transition={{ type: 'spring', damping: 28, stiffness: 260 }}
           className={`relative w-full max-w-lg rounded-3xl border text-center overflow-hidden transition-all shadow-2xl ${
             isDark
-              ? 'bg-[#14141E] border-white/10 shadow-[0_20px_70px_rgba(0,0,0,0.85)] text-white'
-              : 'bg-white border-slate-200 shadow-2xl text-slate-900'
+              ? 'bg-[#14141E] border-[#8B5CF6]/40 shadow-[0_20px_70px_rgba(0,0,0,0.85)] text-white'
+              : 'bg-white border-purple-200 shadow-purple-500/10 text-slate-900'
           }`}
         >
+          {/* Top Security & Certificate Accent Line */}
+          <div className="h-1.5 w-full bg-gradient-to-r from-[#8B5CF6] via-[#EC4899] to-[#8B5CF6]" />
+
           {/* Close button */}
           <button
             id="btn-close-winner-modal"
@@ -262,19 +265,19 @@ export const WinnerModal: React.FC<WinnerModalProps> = ({
             className={`absolute top-4 right-4 p-2 rounded-xl transition-all ${
               isDark
                 ? 'text-white/40 hover:text-white hover:bg-white/10'
-                : 'text-slate-400 hover:text-slate-800 hover:bg-slate-100'
+                : 'text-slate-400 hover:text-slate-800 hover:bg-purple-50'
             }`}
             title="Tutup (ESC)"
           >
             <X className="w-4 h-4" />
           </button>
 
-          <div className="p-6 sm:p-7 pt-8 sm:pt-9">
+          <div className="p-6 sm:p-7">
             {/* Prestige Header Badge */}
             <div className="flex items-center justify-center gap-2 mb-3">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-bold tracking-widest uppercase bg-purple-500/10 border border-purple-500/25 text-[#8B5CF6]">
                 <ShieldCheck className="w-3.5 h-3.5 text-[#8B5CF6]" />
-                <span>BUKTI KLAIM RESMI IBGADGETSTORE</span>
+                <span>KLAIM RESMI IBGADGETSTORE</span>
               </span>
             </div>
 
@@ -289,7 +292,7 @@ export const WinnerModal: React.FC<WinnerModalProps> = ({
               </h3>
             </div>
 
-            {/* Central Prize Proof Frame */}
+            {/* Central Prize Certificate Frame */}
             <div
               className={`relative rounded-2xl border p-5 sm:p-6 transition-all ${
                 isDark
@@ -369,7 +372,7 @@ export const WinnerModal: React.FC<WinnerModalProps> = ({
                 className={`px-3.5 py-2.5 rounded-xl font-semibold text-xs border flex items-center justify-center gap-1.5 transition-all ${
                   isDark
                     ? 'bg-white/5 border-white/10 text-white hover:bg-white/10'
-                    : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
+                    : 'bg-purple-50 border-purple-200 text-slate-800 hover:bg-purple-100'
                 }`}
                 title="Salin rincian klaim pemenang"
               >
@@ -387,18 +390,18 @@ export const WinnerModal: React.FC<WinnerModalProps> = ({
               </button>
 
               <button
-                id="btn-download-proof"
-                onClick={handleDownloadProof}
-                disabled={isGeneratingProof}
+                id="btn-download-cert"
+                onClick={handleDownloadCertificate}
+                disabled={isGeneratingCertificate}
                 className={`px-3.5 py-2.5 rounded-xl font-semibold text-xs border flex items-center justify-center gap-1.5 transition-all ${
                   isDark
                     ? 'bg-white/5 border-white/10 text-white hover:bg-white/10'
-                    : 'bg-purple-50 border-purple-200 text-[#7C3AED] hover:bg-purple-100'
+                    : 'bg-purple-50 border-purple-200 text-slate-800 hover:bg-purple-100'
                 }`}
-                title="Unduh bukti kemenangan gambar digital"
+                title="Unduh sertifikat gambar digital"
               >
                 <Download className="w-3.5 h-3.5 text-[#8B5CF6]" />
-                <span>{isGeneratingProof ? 'Membuat...' : 'Unduh Bukti'}</span>
+                <span>{isGeneratingCertificate ? 'Membuat...' : 'Unduh Sertifikat'}</span>
               </button>
             </div>
 
